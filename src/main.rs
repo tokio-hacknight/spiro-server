@@ -8,6 +8,7 @@ use piston_window::*;
 use std::thread;
 
 mod server;
+mod interval;
 
 use std::sync::mpsc::{channel, TryRecvError};
 
