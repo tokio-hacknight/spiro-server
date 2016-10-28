@@ -6,15 +6,26 @@ use piston_window::*;
 widget_ids! {
     struct Ids {
         canvas,
-        line,
         point_path,
-        rectangle_fill,
-        rectangle_outline,
-        trapezoid,
-        oval_fill,
-        oval_outline,
-        circle,
     }
+}
+
+const N_STEPS: usize = 128;
+
+pub fn spirograph(components: Vec<(f64, f64)>, v_scale: f64, r_scale: f64) -> Vec<[f64; 2]> {
+    let mut phases = vec![0.0; components.len()];
+    let mut out = Vec::with_capacity(N_STEPS);
+    for _ in 0..N_STEPS {
+        let mut x = 0.0;
+        let mut y = 0.0;
+        for (phase, &(speed, radius)) in phases.iter_mut().zip(&components) {
+            *phase += speed * v_scale;
+            x += phase.cos() * radius * r_scale;
+            y += phase.sin() * radius * r_scale;
+        }
+        out.push([x, y]);
+    }
+    out
 }
 
 fn main() {
@@ -26,15 +37,11 @@ fn main() {
     window.set_ups(60);
 
     let mut ui = conrod::UiBuilder::new().build();
-
     let ids = Ids::new(ui.widget_id_generator());
-
     let mut text_texture_cache = conrod::backend::piston_window::GlyphCache::new(&mut window, 0, 0);
-
     let image_map = conrod::image::Map::new();
 
     while let Some(event) = window.next() {
-
         // Convert the piston event to a conrod event.
         if let Some(e) = conrod::backend::piston_window::convert_event(event.clone(), &window) {
             ui.handle_event(e);
@@ -65,9 +72,7 @@ fn set_ui(ref mut ui: conrod::UiCell, ids: &Ids) {
     // The background canvas upon which we'll place our widgets.
     Canvas::new().pad(80.0).set(ids.canvas, ui);
 
-    let points: Vec<_> =
-        (0u32..100).map(|t| [(t as f64/100.0).cos() * 100.0,
-                             (t as f64/100.0).sin() * 100.0])
-        .collect();
+    let points = spirograph(vec![(1.0, 3.0), (0.2, 0.9), (0.5, 1.0), (7.0, 0.9)],
+                            0.05, 100.0);
     PointPath::centred(points).middle().set(ids.point_path, ui);
 }
