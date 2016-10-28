@@ -38,7 +38,9 @@ pub fn run(sender: Sender<Vec<ClientData>>) {
                     add_to_client_data(addr, (d, e), &mut clients)));
         }
 
-        sender.send(clients.iter().map(|c| c.data).collect());
+        let coords = clients.iter().map(|c| c.data).collect();
+        println!("{:?}", coords);
+        let _ = sender.send(coords);
 
         Ok(())
     })).unwrap();
