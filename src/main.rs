@@ -9,6 +9,8 @@ use std::thread;
 
 mod server;
 
+use std::sync::mpsc::channel;
+
 
 widget_ids! {
     struct Ids {
@@ -48,8 +50,10 @@ fn main() {
     let mut text_texture_cache = conrod::backend::piston_window::GlyphCache::new(&mut window, 0, 0);
     let image_map = conrod::image::Map::new();
 
+    let (sender, receiver) = channel::<Vec<server::ClientData>>();
+
     thread::spawn(|| {
-        server::run();
+        server::run(sender);
     });
 
     while let Some(event) = window.next() {

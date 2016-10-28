@@ -11,20 +11,46 @@ use tokio_core::io::{copy, Io};
 use tokio_core::net::UdpSocket;
 use tokio_core::reactor::{Core, Handle};
 
+use std::sync::mpsc::Sender;
+
+
 const LISTEN_ADDRESS: &'static str = "0.0.0.0:26262";
 
-pub fn run() {
+struct Client {
+    addr: SocketAddr,
+    data: ClientData
+}
+
+type Clients = Vec<Client>;
+type ClientData = (f64, f64);
+
+pub fn run(sender: Sender<Vec<ClientData>>) {
     // Create the event loop that will drive this server
     let mut l = Core::new().unwrap();
     let handle = l.handle();
+    let mut clients : Clients = vec![];
 
     let server = SpiroServer::new(&handle);
-    l.run(server.for_each(|x| {
-        println!("{:?}", x);
+    l.run(server.for_each(|(addr, words)| {
+        if words.len() >= 2 {
+            words[0].parse::<f64>().map(|d|
+                words[1].parse::<f64>().map(|e|
+                    add_to_client_data(addr, (d, e), &mut clients)));
+        }
+
         Ok(())
     })).unwrap();
 }
 
+fn add_to_client_data(addr: SocketAddr, data: ClientData, clients: &mut Clients) {
+    for c in clients.iter_mut() {
+        if c.addr == addr {
+            c.data = data;
+            return;
+        }
+    }
+    clients.push(Client { addr: addr, data: data });
+}
 
 struct SpiroServer {
     inner: UdpSocket,
@@ -59,4 +85,3 @@ impl Stream for SpiroServer {
         }
     }
 }
-
