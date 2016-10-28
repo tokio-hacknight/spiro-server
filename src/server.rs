@@ -16,13 +16,13 @@ use std::sync::mpsc::Sender;
 
 const LISTEN_ADDRESS: &'static str = "0.0.0.0:26262";
 
-struct Client {
+pub struct Client {
     addr: SocketAddr,
     data: ClientData
 }
 
-type Clients = Vec<Client>;
-type ClientData = (f64, f64);
+pub type Clients = Vec<Client>;
+pub type ClientData = (f64, f64);
 
 pub fn run(sender: Sender<Vec<ClientData>>) {
     // Create the event loop that will drive this server
@@ -37,6 +37,8 @@ pub fn run(sender: Sender<Vec<ClientData>>) {
                 words[1].parse::<f64>().map(|e|
                     add_to_client_data(addr, (d, e), &mut clients)));
         }
+
+        sender.send(clients.iter().map(|c| c.data).collect());
 
         Ok(())
     })).unwrap();
