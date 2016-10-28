@@ -1,0 +1,6 @@
+[package]
+name = "spiro-server"
+version = "0.1.0"
+authors = ["Rico Huijbers <rix0rrr@gmail.com>"]
+
+[dependencies]
