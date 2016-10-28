@@ -39,7 +39,7 @@ impl SpiroServer {
 }
 
 impl Stream for SpiroServer {
-    type Item = (SocketAddr, Vec<u8>);
+    type Item = (SocketAddr, Vec<String>);
     type Error = io::Error;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
@@ -47,13 +47,15 @@ impl Stream for SpiroServer {
             return Ok(Async::NotReady)
         }
 
-        let mut buf = vec![0; 1024];
-        let (size, addr) = try_nb!(self.inner.recv_from(&mut buf));
-        buf.truncate(size);
-        if size == 0 {
-            Ok(None.into())
-        } else {
-            Ok(Some((addr, buf)).into())
+        loop {
+            let mut buf = vec![0; 2048];
+            let (size, addr) = try_nb!(self.inner.recv_from(&mut buf));
+            buf.truncate(size);
+
+            match String::from_utf8(buf) {
+                Ok(s) => return Ok(Some((addr, s.trim().split('\t').map(|s| s.to_owned()).collect())).into()),
+                Err(_) => {}
+            }
         }
     }
 }
