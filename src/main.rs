@@ -9,7 +9,7 @@ use std::thread;
 
 mod server;
 
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, TryRecvError};
 
 
 widget_ids! {
@@ -19,7 +19,7 @@ widget_ids! {
     }
 }
 
-pub fn spirograph(components: Vec<(f64, f64)>, v_scale: f64, r_scale: f64, n_steps: usize)
+pub fn spirograph(components: &Vec<(f64, f64)>, v_scale: f64, r_scale: f64, n_steps: usize)
                   -> Vec<[f64; 2]>
 {
     let mut phases = vec![0.0; components.len()];
@@ -27,7 +27,7 @@ pub fn spirograph(components: Vec<(f64, f64)>, v_scale: f64, r_scale: f64, n_ste
     for _ in 0..n_steps {
         let mut x = 0.0;
         let mut y = 0.0;
-        for (phase, &(speed, radius)) in phases.iter_mut().zip(&components) {
+        for (phase, &(speed, radius)) in phases.iter_mut().zip(components) {
             *phase += speed * v_scale;
             x += phase.cos() * radius * r_scale;
             y += phase.sin() * radius * r_scale;
@@ -56,14 +56,22 @@ fn main() {
         server::run(sender);
     });
 
+    let mut params = Vec::new();
+
     while let Some(event) = window.next() {
         // Convert the piston event to a conrod event.
         if let Some(e) = conrod::backend::piston_window::convert_event(event.clone(), &window) {
             ui.handle_event(e);
         }
 
+        match receiver.try_recv() {
+            Ok(res) => params = res,
+            Err(TryRecvError::Empty) => (),
+            Err(TryRecvError::Disconnected) => break,
+        }
+
         // Update the widgets.
-        event.update(|_| set_ui(ui.set_widgets(), &ids));
+        event.update(|_| set_ui(&params, ui.set_widgets(), &ids));
 
         // Draw the `Ui`.
         window.draw_2d(&event, |c, g| {
@@ -79,14 +87,13 @@ fn main() {
 }
 
 
-fn set_ui(ref mut ui: conrod::UiCell, ids: &Ids) {
+fn set_ui(params: &Vec<server::ClientData>, ref mut ui: conrod::UiCell, ids: &Ids) {
     use conrod::{Positionable, Widget};
     use conrod::widget::{Canvas, PointPath};
 
     // The background canvas upon which we'll place our widgets.
     Canvas::new().pad(80.0).set(ids.canvas, ui);
 
-    let points = spirograph(vec![(1.0, 3.0), (0.2, 0.9), (0.5, 1.0), (7.0, 0.9)],
-                            0.05, 100.0, 256);
+    let points = spirograph(params, 0.05, 100.0, 256);
     PointPath::centred(points).middle().set(ids.point_path, ui);
 }

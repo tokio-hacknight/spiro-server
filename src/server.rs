@@ -22,7 +22,7 @@ struct Client {
 }
 
 type Clients = Vec<Client>;
-type ClientData = (f64, f64);
+pub type ClientData = (f64, f64);
 
 pub fn run(sender: Sender<Vec<ClientData>>) {
     // Create the event loop that will drive this server
