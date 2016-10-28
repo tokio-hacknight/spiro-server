@@ -1,6 +1,8 @@
 [package]
 name = "spiro-server"
 version = "0.1.0"
-authors = ["Rico Huijbers <rix0rrr@gmail.com>"]
+authors = ["Rico Huijbers <rix0rrr@gmail.com>", "Caleb Jones <code@calebjones.net>"]
 
 [dependencies]
+conrod = "0.44.1"
+piston_window = "0.52.0"
