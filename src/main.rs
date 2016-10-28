@@ -10,12 +10,12 @@ widget_ids! {
     }
 }
 
-const N_STEPS: usize = 128;
-
-pub fn spirograph(components: Vec<(f64, f64)>, v_scale: f64, r_scale: f64) -> Vec<[f64; 2]> {
+pub fn spirograph(components: Vec<(f64, f64)>, v_scale: f64, r_scale: f64, n_steps: usize)
+                  -> Vec<[f64; 2]>
+{
     let mut phases = vec![0.0; components.len()];
-    let mut out = Vec::with_capacity(N_STEPS);
-    for _ in 0..N_STEPS {
+    let mut out = Vec::with_capacity(n_steps);
+    for _ in 0..n_steps {
         let mut x = 0.0;
         let mut y = 0.0;
         for (phase, &(speed, radius)) in phases.iter_mut().zip(&components) {
@@ -73,6 +73,6 @@ fn set_ui(ref mut ui: conrod::UiCell, ids: &Ids) {
     Canvas::new().pad(80.0).set(ids.canvas, ui);
 
     let points = spirograph(vec![(1.0, 3.0), (0.2, 0.9), (0.5, 1.0), (7.0, 0.9)],
-                            0.05, 100.0);
+                            0.05, 100.0, 256);
     PointPath::centred(points).middle().set(ids.point_path, ui);
 }
